@@ -1,8 +1,8 @@
 # Reno Platforms Assignment
 
 ## Live Demo
-- GitHub: https://github.com/<your-username>/reno-assignment
-- Vercel: https://reno-assignment.vercel.app
+- GitHub: https://github.com/Faizfaheed/Reno-assignment
+- Vercel: (https://reno-assignment-izqw-5qv060lki-faheeds-projects-1330102e.vercel.app/addSchool)
 
 ## Features
 - Add School (local dev): image upload with formidable, saved to /public/schoolImages
