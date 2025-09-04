@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: reno_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Reno@1ment
+      MYSQL_DATABASE: reno_assignment
+      MYSQL_USER: reno_user
+      MYSQL_PASSWORD: st40ngp2d
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: reno_phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+
+volumes:
+  db_data:

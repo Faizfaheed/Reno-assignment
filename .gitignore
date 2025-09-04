@@ -1,0 +1,36 @@
+node_modules
+.next
+.env.local
+.DS_Store
+*.log
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac/Windows system files
+.DS_Store
+Thumbs.db
+
+# Database volumes (Docker data folders)
+mysql_data/
+phpmyadmin_data/
+
+# Other sensitive/temporary files
+*.sql
+*.sqlite
