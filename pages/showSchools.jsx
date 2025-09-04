@@ -11,10 +11,23 @@ export default function ShowSchools() {
     const fetchData = async () => {
       try {
         const res = await fetch('/api/schools');
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to fetch');
-        setSchools(json.data);
+
+        // if API is down or wrong route
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status} ${res.statusText}`);
+        }
+
+        // try parsing JSON safely
+        let json;
+        try {
+          json = await res.json();
+        } catch (parseErr) {
+          throw new Error('Invalid JSON returned from API');
+        }
+
+        setSchools(json.data || []);
       } catch (e) {
+        console.error('Fetch failed:', e);
         setError(e.message);
       } finally {
         setLoading(false);
@@ -23,10 +36,12 @@ export default function ShowSchools() {
     fetchData();
   }, []);
 
-  const filtered = schools.filter(s => {
+  const filtered = schools.filter((s) => {
     const term = q.trim().toLowerCase();
     if (!term) return true;
-    return [s.name, s.address, s.city].some(v => (v || '').toLowerCase().includes(term));
+    return [s.name, s.address, s.city].some((v) =>
+      (v || '').toLowerCase().includes(term)
+    );
   });
 
   return (
@@ -40,16 +55,24 @@ export default function ShowSchools() {
       </div>
 
       <div style={{ marginBottom: 12 }}>
-        <input className="input" placeholder="Search by name, address or city..." value={q} onChange={e => setQ(e.target.value)} />
+        <input
+          className="input"
+          placeholder="Search by name, address or city..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
       </div>
 
       {loading && <p>Loading...</p>}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error">Error: {error}</p>}
 
       <div className="grid">
         {filtered.map((school) => (
           <article className="card" key={school.id}>
-            <img src={school.image || '/schoolImages/placeholder.jpg'} alt={school.name} />
+            <img
+              src={school.image || '/schoolImages/placeholder.jpg'}
+              alt={school.name}
+            />
             <div className="body">
               <h3 style={{ margin: '0 0 6px 0' }}>{school.name}</h3>
               <p style={{ margin: 0, color: '#374151' }}>{school.address}</p>
@@ -58,7 +81,10 @@ export default function ShowSchools() {
           </article>
         ))}
       </div>
-      {(!loading && filtered.length === 0) && <p>No schools found.</p>}
+
+      {!loading && !error && filtered.length === 0 && (
+        <p>No schools found.</p>
+      )}
     </main>
   );
 }
