@@ -5,7 +5,7 @@ import { getPool, ensureTable } from '../../../lib/db';
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false, // disable default body parsing for formidable
   },
 };
 
@@ -20,6 +20,7 @@ export default async function handler(req, res) {
     return res.status(403).json({ ok: false, error: 'Read-only mode: Cannot add schools' });
   }
 
+  // Handle POST requests (adding a school)
   if (req.method === 'POST') {
     try {
       const form = new IncomingForm({ multiples: false, keepExtensions: true });
@@ -30,7 +31,7 @@ export default async function handler(req, res) {
           return res.status(400).json({ ok: false, error: 'Invalid form data' });
         }
 
-        // Required fields check
+        // Required fields validation
         const required = ['name', 'address', 'city', 'state', 'contact', 'email_id'];
         for (const r of required) {
           if (!fields[r] || String(fields[r]).trim() === '') {
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
           return res.status(422).json({ ok: false, error: 'Invalid email' });
         }
 
-        // Contact validation
+        // Contact number validation
         const contact = String(fields.contact);
         if (!/^\d{7,15}$/.test(contact)) {
           return res.status(422).json({ ok: false, error: 'Invalid contact number' });
@@ -57,14 +58,12 @@ export default async function handler(req, res) {
 
         if (file && file.size > 0) {
           const imagesDir = path.join(process.cwd(), 'public', 'schoolImages');
-          if (!fs.existsSync(imagesDir)) {
-            fs.mkdirSync(imagesDir, { recursive: true });
-          }
+          if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
 
           const fileName = `${Date.now()}_${file.originalFilename || 'image'}`.replace(/\s+/g, '_');
           const destPath = path.join(imagesDir, fileName);
 
-          // Copy file and remove temp file
+          // Copy uploaded file and remove temp file
           await fs.promises.copyFile(file.filepath, destPath);
           await fs.promises.unlink(file.filepath);
 
@@ -73,7 +72,7 @@ export default async function handler(req, res) {
           return res.status(422).json({ ok: false, error: 'Image is required' });
         }
 
-        // Save to DB
+        // Insert into DB
         try {
           const pool = getPool();
           const sql = `
@@ -92,26 +91,38 @@ export default async function handler(req, res) {
 
           return res.status(201).json({ ok: true, message: 'School created successfully' });
         } catch (dbError) {
-          console.error('Database error:', dbError);
+          console.error('Database error (POST):', dbError);
           return res.status(500).json({ ok: false, error: 'Database error' });
         }
       });
     } catch (e) {
-      console.error('Server error:', e);
+      console.error('Server error (POST):', e);
       return res.status(500).json({ ok: false, error: 'Server error' });
     }
-  } else if (req.method === 'GET') {
+  }
+
+  // Handle GET requests (fetching schools)
+  else if (req.method === 'GET') {
     try {
       const pool = getPool();
       const [rows] = await pool.query(
         'SELECT id, name, address, city, image FROM schools ORDER BY id DESC'
       );
-      return res.status(200).json({ ok: true, data: rows });
+
+      // Always return valid JSON, even if no rows
+      return res.status(200).json({ ok: true, data: rows || [] });
     } catch (e) {
-      console.error('Database error:', e);
-      return res.status(500).json({ ok: false, error: 'Database error' });
+      console.error('Database error (GET):', e.message);
+      return res.status(500).json({
+        ok: false,
+        error: 'Database error – check your DB connection',
+        data: [],
+      });
     }
-  } else {
+  }
+
+  // Method not allowed
+  else {
     res.setHeader('Allow', ['GET', 'POST']);
     return res.status(405).end('Method Not Allowed');
   }
